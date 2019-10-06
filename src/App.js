@@ -1,36 +1,79 @@
 import React, { useState, useEffect } from 'react'
-import logo from './logo.svg'
+import Highcharts from 'highcharts'
+import HighchartsReact from 'highcharts-react-official'
 import './App.css'
 
+const defaultOptions = {
+  credits: {
+    enabled: false
+  },
+  title: {
+    text: 'Race',
+    style: {
+      color: '#e6e6e6'
+    }
+  },
+  plotOptions: {
+    series: {
+      borderWidth: 0
+    }
+  },
+  legend: {
+    itemStyle: {
+      color: '#e6e6e6'
+    }
+  },
+  chart: {
+    backgroundColor: '#282c34',
+    type: 'column'
+  },
+  yAxis: {
+    min: 0,
+    title: {
+      text: 'Score'
+    }
+  }
+}
+
 function App () {
-  const [messages, setMessages] = useState([])
+  const [options, setOptions] = useState(defaultOptions)
 
   useEffect(() => {
+    console.log('use effect fired')
     const socket = new WebSocket('ws://localhost:3001')
     socket.addEventListener('message', evt => {
       console.log(evt.data)
-      setMessages(JSON.parse(evt.data))
+      const { series, xAxis } = formatData(JSON.parse(evt.data))
+      setOptions({
+        ...defaultOptions,
+        series,
+        xAxis
+      })
     })
   }, [])
+
+  const formatData = data => {
+    return {
+      xAxis: {
+        categories: data.map((point, i) => i)
+      },
+      series: [
+        {
+          name: 'Scores',
+          data: data.map(i => i.score)
+        }
+      ]
+    }
+  }
 
   return (
     <div className='App'>
       <header className='App-header'>
-        <img src={logo} className='App-logo' alt='logo' />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        {messages.map(message => (
-          <pre>{message.Body}</pre>
-        ))}
-        <a
-          className='App-link'
-          href='https://reactjs.org'
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Learn React
-        </a>
+        <HighchartsReact
+          containerProps={{ style: { width: '95vw' } }}
+          highcharts={Highcharts}
+          options={options}
+        />
       </header>
     </div>
   )
